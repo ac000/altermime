@@ -1529,8 +1529,6 @@ Errors:
 ------------------------------------------------------------------------*/
 int AM_add_disclaimer_insert_html( 	struct AM_disclaimer_details *dd, FFGET_FILE *f, FILE *newf )
 {
-	char boundary[ AM_1K_BUFFER_SIZE +1];
-	int boundary_length = 0;
 	char line[ AM_1K_BUFFER_SIZE +1];
 	char lline[ AM_1K_BUFFER_SIZE +1];
 	char *prebody, *tmpbody;
@@ -1540,55 +1538,11 @@ int AM_add_disclaimer_insert_html( 	struct AM_disclaimer_details *dd, FFGET_FILE
 
 	DAM LOGGER_log("%s:%d:AM_add_disclaimer_insert_html:DEBUG: Starting to attempt to insert HTML disclaimer",FL);
 
-	if (dd->boundary_found == 1)
-	{
-		snprintf(boundary, sizeof(boundary), "--%s", dd->boundary);
-		boundary_length = strlen(boundary);
-	}
-
 	while (FFGET_fgets(line, AM_1K_BUFFER_SIZE, f))
 	{
-
 		snprintf(lline, sizeof(lline),"%s",line);
 		PLD_strlower(lline);
 
-		/** 20041019-1135:PLD: Applied diff as contributed by Tim (datalore)
-		 **
-		 ** If we reached the end of the boundary, check if force html insertion is
-		 ** enabled. If so, force the html disclaimer into the message.
-		 **/
-		if((dd->boundary_found == 1) && (strncmp(boundary, line, boundary_length) == 0)) {
-
-			DAM LOGGER_log("%s:%d:AM_add_disclaimer_insert_html: End of boundary reached before html disclamer was added...",FL);
-			if (glb.force_for_bad_html == 1)
-			{
-				DAM LOGGER_log("%s:%d:Forcing insertion of html disclaimer into non valid html body...",FL);
-
-				dd->html_inserted = 1;
-
-				AM_disclaimer_html_perform_insertion( dd, f, newf );
-
-			}
-
-			// write the boundary line
-			fprintf(newf, "%s", line);
-
-			// stop searching/adding/whatever
-			break;
-		}
-
-		/** not at end of boundary, so search for body/html tag **/
-
-		/** End of patch as supplied by Tim (datalore) **/
-
-
-
-
-		/* Looking for the location to insert the HTML disclaimer.
-		 *
-		 * If we've got PRETEXT set, then we look for the starting BODY tag
-		 * else we look for the closing tag.
-		 */
 		if (glb.pretext_insert == 1) {
 			prebody =  strstr(lline,"<body");
 
@@ -1601,7 +1555,6 @@ int AM_add_disclaimer_insert_html( 	struct AM_disclaimer_details *dd, FFGET_FILE
 			prebody = strstr(lline,"</body");
 			if ((!prebody)&&(dd->html_inserted==0)) prebody = strstr(lline,"</html");
 		}
-
 
 		// If we found one of the tags, then insert our disclaimer aruond about
 		// here.
