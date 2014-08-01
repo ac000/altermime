@@ -115,7 +115,6 @@ int AM_init( void )
 	glb.alter_signed=0;		/* Do we alter signed emails ? - default is NO */
 	glb.header_long_search=1;	/* Search into email bodies for more attachments */
 	glb.force_into_b64=0;		/* By default don't insert into B64 encoded bodies */
-	glb.force_for_bad_html=0;	/* By default don't try append into broken HTML */
 
 	snprintf(glb.ldelimeter,sizeof(glb.ldelimeter),"\r\n");
 
