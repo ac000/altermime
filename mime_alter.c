@@ -1634,10 +1634,31 @@ int AM_add_disclaimer_insert_html( 	struct AM_disclaimer_details *dd, FFGET_FILE
 		//	break; ??? why is this BREAK here?
 
 		} else {
-			fprintf(newf,"%s",line);
+			/*
+			 * Last gasp attempt to add pre html. Force it in
+			 * then get out of here.
+			 */
+			if (!dd->html_inserted &&
+			    glb.force_for_bad_html &&
+			    glb.pretext_insert) {
+				AM_disclaimer_html_perform_insertion( dd, f, newf );
+				fprintf(newf,"%s",line);
+				dd->html_inserted = 1;
+				break;
+			} else {
+				fprintf(newf,"%s",line);
+			}
 		}
 
 	} // While FFGET_fgets()
+
+	/* Last gasp attempt to add post html */
+	if (!dd->html_inserted &&
+	    !glb.pretext_insert &&
+	    glb.force_for_bad_html) {
+		AM_disclaimer_html_perform_insertion( dd, f, newf );
+		dd->html_inserted = 1;
+	}
 
 	return dd->html_inserted;
 }
