@@ -2048,7 +2048,7 @@ int AM_insert_disclaimer_into_segment64( FFGET_FILE *f, FILE *newf, struct AM_di
 
 	/** From here the output file is ready **/
 
-	if ( (0 == dd->text_inserted) 
+	if ( (0 == dd->b64_inserted)
 			&& (dd->content_type == _CTYPE_TEXT_PLAIN ) 
 			&& (dd->content_encoding == _CTRANS_ENCODING_B64)
 			&& (dd->isfile == 0) 
@@ -2095,7 +2095,7 @@ int AM_insert_disclaimer_into_segment64( FFGET_FILE *f, FILE *newf, struct AM_di
 			/** Encode the text file back into B64 **/
 			DAM LOGGER_log("%s:%d:AM_insert_disclaimer_into_segment64:DEBUG: Inserting TEXT disclaimer (%s)\n", FL, dd->disclaimer_text_plain);
 			AM_base64_encode_buffer_to_FILE( new_b64_buffer, strlen(new_b64_buffer), newf );
-			dd->text_inserted = 1;
+			dd->b64_inserted = 1;
 			free(new_b64_buffer);
 		}
 
