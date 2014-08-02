@@ -176,7 +176,7 @@ int ALTERMIMEAPP_parse_args( struct ALTERMIMEAPP_globals *glb, int argc, char **
 				glb->pretext_insert = 1;
 
 			} else if (strncmp(p,"pretext-b64=",strlen("pretext-b64="))==0) {
-				glb->pretext_html_file = p +strlen("pretext-b64=");
+				glb->pretext_b64_file = p +strlen("pretext-b64=");
 				AM_set_force_into_b64(1);
 				glb->pretext_insert = 1;
 

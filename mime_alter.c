@@ -114,7 +114,6 @@ int AM_init( void )
 	glb.nullify_all=0;			/* Remove ALL filename'd attachments */
 	glb.alter_signed=0;		/* Do we alter signed emails ? - default is NO */
 	glb.header_long_search=1;	/* Search into email bodies for more attachments */
-	glb.force_into_b64=0;		/* By default don't insert into B64 encoded bodies */
 
 	snprintf(glb.ldelimeter,sizeof(glb.ldelimeter),"\r\n");
 
@@ -1833,17 +1832,29 @@ Changes:
 char *AM_insert_disclaimer_into_buffer( char *buffer, struct AM_disclaimer_details *dd )
 {
 	char *p = buffer;
+	char *itext;
 	size_t total_size;
 
-	total_size = strlen(dd->disclaimer_text_plain) +strlen(buffer) +1;
+	/*
+	 * Look for our insertion text, order is important or
+	 * --pretext=pretext.txt --pretext-b64=pretext.b64 --force-into-b64
+	 * would cause pretext.txt to be used rather than pretext.b64
+	 */
+	if (dd->disclaimer_text_b64) {
+		itext = dd->disclaimer_text_b64;
+	} else {
+		itext = dd->disclaimer_text_plain;
+	}
+
+	total_size = strlen(itext) +strlen(buffer) +2; /* \0 and \n */
 
 	p = malloc( total_size *sizeof(char) );
 	if (p) {
 
 		if (glb.pretext_insert==1) {
-			snprintf(p, total_size-1, "%s\n%s", dd->disclaimer_text_plain, buffer);
+			snprintf(p, total_size, "%s\n%s", itext, buffer);
 		} else {
-			snprintf(p, total_size-1, "%s\n%s", buffer, dd->disclaimer_text_plain);
+			snprintf(p, total_size, "%s\n%s", buffer, itext);
 		}
 
 	}
