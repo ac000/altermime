@@ -357,7 +357,7 @@ int main( int argc, char **argv )
 		exit(1);
 	}
 
-	if( glb.input_file && !(glb.alter_mode||glb.replace||glb.disclaimer_file||glb.remove_filename||glb.xheader||glb.pretext_file||glb.pretext_html_file)) {
+	if( glb.input_file && !(glb.alter_mode||glb.replace||glb.disclaimer_file||glb.remove_filename||glb.xheader||glb.pretext_file||glb.pretext_html_file||glb.pretext_b64_file||glb.disclaimer_b64_file||glb.disclaimer_html_file)) {
 		LOGGER_log("Error: Must specify an action for the input file.\n");
 		LOGGER_log( ALTERMIMEAPP_USAGE);
 		exit(1);
@@ -414,7 +414,7 @@ int main( int argc, char **argv )
 #ifdef ALTERMIME_PRETEXT
 	AM_set_pretext(0);
 #endif
-	if (glb.disclaimer_file) AM_add_disclaimer( glb.input_file );
+	if (glb.disclaimer_file||glb.disclaimer_html_file||glb.disclaimer_b64_file) AM_add_disclaimer( glb.input_file );
 	if (glb.remove_filename) AM_nullify_attachment(glb.input_file, glb.remove_filename);
 	if (glb.xheader) AM_insert_Xheader( glb.input_file, glb.xheader);
 	AM_done();
