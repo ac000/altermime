@@ -2351,7 +2351,6 @@ int AM_insert_disclaimer_into_segment( FFGET_FILE *f, FILE *newf, struct AM_disc
 
 	DAM LOGGER_log("%s:%d:AM_insert_disclaimer_into_segment:DEBUG: Inserting disclaimer into segment - encoding=%d type=%d",FL, dd->content_encoding, dd->content_type);
 
-
 	/** check for types that we're not supposed to be inserting into
 	 *
 	 * Currently the types not to insert to include;
@@ -2393,6 +2392,7 @@ int AM_insert_disclaimer_into_segment( FFGET_FILE *f, FILE *newf, struct AM_disc
 	if ( (0 == dd->text_inserted) \
 			&& (dd->content_type == _CTYPE_TEXT_PLAIN ) \
 			&& (dd->isfile == 0) \
+			&& (dd->disclaimer_text_plain) \
 		)
 	{
 		DAM LOGGER_log("%s:%d:AM_insert_disclaimer_into_segment:DEBUG: Conditions right to insert disclaimer\n",FL);
@@ -2515,6 +2515,7 @@ int AM_insert_disclaimer_into_segment( FFGET_FILE *f, FILE *newf, struct AM_disc
 			&& ( 0 == dd->html_inserted ) \
 			&& ( dd->content_type == _CTYPE_TEXT_HTML )\
 			&& ( dd->isfile == 0 ) \
+			&& (dd->disclaimer_text_HTML) \
 		)
 	{
 		DAM LOGGER_log("%s:%d:AM_insert_disclaimer_into_segment:DEBUG: Conditions potentially right for HTML disclaimer to be added",FL);
