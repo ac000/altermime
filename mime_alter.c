@@ -1539,6 +1539,9 @@ int AM_add_disclaimer_insert_html( 	struct AM_disclaimer_details *dd, FFGET_FILE
 
 	while (FFGET_fgets(line, AM_1K_BUFFER_SIZE, f))
 	{
+		/* Don't read past the mime boundary */
+		if ( BS_cmp(line,strlen(line))==1 )
+			break;
 		snprintf(lline, sizeof(lline),"%s",line);
 		PLD_strlower(lline);
 
@@ -1611,6 +1614,9 @@ int AM_add_disclaimer_insert_html( 	struct AM_disclaimer_details *dd, FFGET_FILE
 		AM_disclaimer_html_perform_insertion( dd, f, newf );
 		dd->html_inserted = 1;
 	}
+
+	/* Be sure to add the boundary back */
+	fprintf(newf,"%s", line);
 
 	return dd->html_inserted;
 }
@@ -2838,7 +2844,7 @@ int AM_add_disclaimer( char *mpackname )
 					} else {
 						DAM LOGGER_log("%s:%d:AM_add_disclaimer: Cannot read headers for SEGMENT %d",FL, 3+depth);
 					}
-				} while (( dd.html_inserted == 0 )&&( depth++ < 3 ));
+				} while (( depth++ < 3 ));
 			}
 
 		} while (0);
