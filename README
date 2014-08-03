@@ -1,3 +1,8 @@
+This branch contains numerous fix's around base64 mime part handling, HTML
+insertion and option handling.
+
+-- Andrew Clayton
+
 alterMIME - MIME encoded email pack alteration tool
 
 Author : Paul L Daniels
