@@ -2054,8 +2054,7 @@ int AM_insert_disclaimer_into_segment64( FFGET_FILE *f, FILE *newf, struct AM_di
 
 	/** From here the output file is ready **/
 
-	if ( (0 == dd->b64_inserted)
-			&& (dd->content_type == _CTYPE_TEXT_PLAIN ) 
+	if ( (dd->content_type == _CTYPE_TEXT_PLAIN )
 			&& (dd->content_encoding == _CTRANS_ENCODING_B64)
 			&& (dd->isfile == 0) 
 		)
@@ -2389,8 +2388,7 @@ int AM_insert_disclaimer_into_segment( FFGET_FILE *f, FILE *newf, struct AM_disc
 	}
 
 
-	if ( (0 == dd->text_inserted) \
-			&& (dd->content_type == _CTYPE_TEXT_PLAIN ) \
+	if ( (dd->content_type == _CTYPE_TEXT_PLAIN ) \
 			&& (dd->isfile == 0) \
 			&& (dd->disclaimer_text_plain) \
 		)
@@ -2512,7 +2510,6 @@ int AM_insert_disclaimer_into_segment( FFGET_FILE *f, FILE *newf, struct AM_disc
 			);
 
 	if ( ( glb.HTML_too ) \
-			&& ( 0 == dd->html_inserted ) \
 			&& ( dd->content_type == _CTYPE_TEXT_HTML )\
 			&& ( dd->isfile == 0 ) \
 			&& (dd->disclaimer_text_HTML) \
