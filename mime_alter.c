@@ -1597,7 +1597,6 @@ int AM_add_disclaimer_insert_html( 	struct AM_disclaimer_details *dd, FFGET_FILE
 			    glb.force_for_bad_html &&
 			    glb.pretext_insert) {
 				AM_disclaimer_html_perform_insertion( dd, f, newf );
-				fprintf(newf,"%s",line);
 				dd->html_inserted = 1;
 				break;
 			} else {
@@ -1615,7 +1614,10 @@ int AM_add_disclaimer_insert_html( 	struct AM_disclaimer_details *dd, FFGET_FILE
 		dd->html_inserted = 1;
 	}
 
-	/* Be sure to add the boundary back */
+	/*
+	 * Be sure to add back the boundary or the last line we read
+	 * when doing the force pre-html insert.
+	 */
 	fprintf(newf,"%s", line);
 
 	return dd->html_inserted;
