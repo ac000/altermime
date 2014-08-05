@@ -25,6 +25,7 @@ char ALTERMIMEAPP_USAGE[]="altermime --input=<input mime pack>   ( --input=- for
 "	[--disclaimer=<disclaimer file>]\n"
 "	[--disclaimer-html=<HTML disclaimer file>]\n"
 "	[--disclaimer-b64=<BASE64 encoded dislcaimer>]\n"
+"	[--disclaimer-html-b64=<BASE64 encoded HTML disclaimer>]\n"
 "	[--htmltoo]\n"
 #ifdef DISPOS
 "	[--textpos=<positioning code>]\n"
@@ -35,7 +36,8 @@ char ALTERMIMEAPP_USAGE[]="altermime --input=<input mime pack>   ( --input=- for
 /*"	[--pretext] Insert disclaimer files in pretext mode.\n"*/ // By implication, pretext is inserted based on the file status below.
 "	[--pretext=<pretext file>]\n"
 "	[--pretext-html=<pretext HTML file>]\n"
-"	[--pretext-b64=<BASE64 encoded pretext >]\n"
+"	[--pretext-b64=<BASE64 encoded pretext>]\n"
+"	[--pretext-html-b64=<BASE64 encoded HTML pretext>]\n"
 #endif
 
 "	[--force-into-b64]\n"
@@ -63,6 +65,7 @@ char ALTERMIMEAPP_USAGE[]="altermime --input=<input mime pack>   ( --input=- for
 "\t--disclaimer=, Set the plaintext disclaimer source file.\n"
 "\t--disclaimer-html=, Set the HTML disclaimer source file.\n"
 "\t--disclaimer-b64=, Set the BASE64 encoded disclaimer source file (implies --force-into-b64).\n"
+"\t--disclaimer-html-b64=, Set the BASE64 encoded HTML disclaimer source file (implies --force-into-b64).\n"
 "\n"
 "\t--htmltoo, Sets alterMIME to insert the plaintext disclaimer into\n"
 "\t--force-into-b64, Sets alterMIME to insert disclaimers into BASE64 encoded text segments\n"
@@ -107,11 +110,13 @@ struct ALTERMIMEAPP_globals {
 	char *disclaimer_file;
 	char *disclaimer_html_file;
 	char *disclaimer_b64_file;
+	char *disclaimer_html_b64_file;
 	char *disclaimer_attachment;
 	int   disclaimer_insert;
 	char *pretext_file;
 	char *pretext_html_file;
 	char *pretext_b64_file;
+	char *pretext_html_b64_file;
 	int   pretext_insert;
 	char *remove_filename;
 	char *replace;
@@ -172,14 +177,16 @@ int ALTERMIMEAPP_parse_args( struct ALTERMIMEAPP_globals *glb, int argc, char **
 
 			} else if (strncmp(p,"pretext-html=",strlen("pretext-html="))==0) {
 				glb->pretext_html_file = p +strlen("pretext-html=");
-				AM_set_HTMLtoo(1);
 				glb->pretext_insert = 1;
 
 			} else if (strncmp(p,"pretext-b64=",strlen("pretext-b64="))==0) {
 				glb->pretext_b64_file = p +strlen("pretext-b64=");
 				AM_set_force_into_b64(1);
 				glb->pretext_insert = 1;
-
+			} else if (strncmp(p,"pretext-html-b64=",strlen("pretext-html-b64="))==0) {
+				glb->pretext_html_b64_file = p +strlen("pretext-html-b64=");
+				AM_set_force_into_b64(1);
+				glb->pretext_insert = 1;
 
 
 			} else if (strncmp(p,"disclaimer=",11)==0) {
@@ -196,6 +203,14 @@ int ALTERMIMEAPP_parse_args( struct ALTERMIMEAPP_globals *glb, int argc, char **
 			} else if (strncmp(p,"disclaimer-b64=",strlen("disclaimer-b64="))==0) {
 				glb->disclaimer_b64_file = p +strlen("disclaimer-b64=");
 				AM_set_disclaimer_b64( glb->disclaimer_b64_file, AM_DISCLAIMER_TYPE_FILENAME );
+				glb->disclaimer_insert = 1;
+				AM_set_force_into_b64(1);
+
+			} else if (strncmp(p,"disclaimer-html-b64=",strlen("disclaimer-html-b64="))==0) {
+				glb->disclaimer_html_b64_file = p +strlen("disclaimer-html-b64=");
+				AM_set_disclaimer_html_b64(
+						glb->disclaimer_html_b64_file,
+						AM_DISCLAIMER_TYPE_FILENAME);
 				glb->disclaimer_insert = 1;
 				AM_set_force_into_b64(1);
 
@@ -293,13 +308,15 @@ int ALTERMIMEAPP_init( struct ALTERMIMEAPP_globals *glb )
 	glb->disclaimer_file 		= NULL;
 	glb->disclaimer_html_file 	= NULL;
 	glb->disclaimer_b64_file	= NULL;
+	glb->disclaimer_html_b64_file	= NULL;
 	glb->disclaimer_insert		= 0;
 
 #ifdef ALTERMIME_PRETEXT
 	glb->pretext_insert		= 0;
-	glb->pretext_file			= NULL;
-	glb->pretext_html_file	= NULL;
-	glb->pretext_b64_file	= NULL;
+	glb->pretext_file		= NULL;
+	glb->pretext_html_file		= NULL;
+	glb->pretext_b64_file		= NULL;
+	glb->pretext_html_b64_file	= NULL;
 #endif
 
 	glb->remove_filename 		= NULL;
@@ -357,7 +374,7 @@ int main( int argc, char **argv )
 		exit(1);
 	}
 
-	if( glb.input_file && !(glb.alter_mode||glb.replace||glb.disclaimer_file||glb.remove_filename||glb.xheader||glb.pretext_file||glb.pretext_html_file||glb.pretext_b64_file||glb.disclaimer_b64_file||glb.disclaimer_html_file)) {
+	if( glb.input_file && !(glb.alter_mode||glb.replace||glb.disclaimer_file||glb.remove_filename||glb.xheader||glb.pretext_file||glb.pretext_html_file||glb.pretext_b64_file||glb.pretext_html_b64_file||glb.disclaimer_b64_file||glb.disclaimer_html_file||glb.disclaimer_html_b64_file)) {
 		LOGGER_log("Error: Must specify an action for the input file.\n");
 		LOGGER_log( ALTERMIMEAPP_USAGE);
 		exit(1);
@@ -414,7 +431,7 @@ int main( int argc, char **argv )
 #ifdef ALTERMIME_PRETEXT
 	AM_set_pretext(0);
 #endif
-	if (glb.disclaimer_file||glb.disclaimer_html_file||glb.disclaimer_b64_file) AM_add_disclaimer( glb.input_file );
+	if (glb.disclaimer_file||glb.disclaimer_html_file||glb.disclaimer_b64_file||glb.disclaimer_html_b64_file) AM_add_disclaimer( glb.input_file );
 	if (glb.remove_filename) AM_nullify_attachment(glb.input_file, glb.remove_filename);
 	if (glb.xheader) AM_insert_Xheader( glb.input_file, glb.xheader);
 	AM_done();
@@ -434,6 +451,9 @@ int main( int argc, char **argv )
 			AM_set_HTMLtoo(1);
 		}
 		if (glb.pretext_b64_file) AM_set_disclaimer_b64( glb.pretext_b64_file, AM_DISCLAIMER_TYPE_FILENAME );
+		if (glb.pretext_html_b64_file)
+			AM_set_disclaimer_html_b64(glb.pretext_html_b64_file,
+					AM_DISCLAIMER_TYPE_FILENAME);
 		AM_add_disclaimer( glb.input_file );
 	}
 #endif

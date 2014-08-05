@@ -49,6 +49,7 @@ struct AM_disclaimer_details {
 	char *disclaimer_text_plain;
 	char *disclaimer_text_HTML;
 	char *disclaimer_text_b64;
+	char *disclaimer_text_HTML_b64;
 	char *disclaimer_attachment; 
 
 
@@ -84,6 +85,10 @@ struct AM_globals {
 	char *disclaimer_HTML_base_fname; // will always hold the primary filename of the HTML disclaimer. Need this for the charset extensions
 	char *disclaimer_HTML;
 	int disclaimer_HTML_type;
+
+	char *disclaimer_HTML_b64_base_fname; // will always hold the primary filename of the HTML disclaimer. Need this for the charset extensions
+	char *disclaimer_HTML_b64;
+	int disclaimer_HTML_b64_type;
 
 	char *disclaimer_b64;
 	int disclaimer_b64_type;
@@ -122,6 +127,7 @@ int AM_init( void );
 int AM_done( void );
 int AM_set_debug( int level );
 
+char *AM_set_disclaimer_html_b64(char *filename, int disclaimer_type);
 char *AM_set_disclaimer_b64( char *filename, int disclaimer_type );
 char *AM_set_disclaimer_plain( char *filename, int disclaimer_type );
 char *AM_set_disclaimer_HTML( char *filename, int disclaimer_type );
