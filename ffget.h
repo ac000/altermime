@@ -74,7 +74,7 @@ int FFGET_set_watch_SDL( int level );
 int FFGET_set_allow_nul(int level );
 
 long FFGET_ftell( FFGET_FILE *f );
-int FFGET_fseek( FFGET_FILE *f, long offset, int whence );
+int FFGET_seek( FFGET_FILE *f, long offset, int whence );
 
 
 #endif
