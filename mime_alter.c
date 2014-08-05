@@ -2353,13 +2353,9 @@ int AM_add_disclaimer_no_boudary( FFGET_FILE *f, FILE *newf, struct AM_disclaime
 		return -1;
 	}
 
-	if ( 
-			dd->content_encoding == _CTRANS_ENCODING_B64
-			&& (
-				(dd->content_type == _CTYPE_TEXT_HTML)
-				|| (dd->content_type == _CTYPE_TEXT_PLAIN)
-				)
-		) {
+	if (dd->content_encoding == _CTRANS_ENCODING_B64 &&
+	    (dd->content_type == _CTYPE_TEXT_HTML ||
+	     dd->content_type == _CTYPE_TEXT_PLAIN)) {
 		/** Normally we don't recommend inserting disclaimers into BASE64 encoded regions
 		 * however, if required, we can do it by setting --force-into-b64
 		 *
@@ -2369,8 +2365,14 @@ int AM_add_disclaimer_no_boudary( FFGET_FILE *f, FILE *newf, struct AM_disclaime
 		 *
 		 * Originally done for NAB.
 		 */
-		if (glb.force_into_b64) return AM_insert_disclaimer_into_segment64( f, newf, dd );
-		else return -1;
+		if (dd->content_type == _CTYPE_TEXT_HTML)
+			return AM_insert_HTML_disclaimer_into_segment64(
+					f, newf, dd);
+		else if (glb.force_into_b64)
+			return AM_insert_disclaimer_into_segment64(
+					f, newf, dd);
+		else
+			return -1;
 
 		/** _segment64 duplicates the rest of the existing _segment function, so there's
 		 * no need to go beyond here
