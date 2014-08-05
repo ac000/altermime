@@ -91,7 +91,8 @@ int qp_encode( char *out, size_t out_size, char *in, size_t in_size, char *line_
 	char CRLF[]="\r\n";
 
 
-	fprintf(stderr,"%s:%d:DEBUG: Line terminator length = %zu\n", FL, strlen(line_terminator));
+	QPD LOGGER_log("%s:%d:qp_encode:DEBUG: Line terminator length = %zu\n",
+			FL, strlen(line_terminator));
 
 	if (line_terminator == NULL) line_terminator = CRLF;
 
