@@ -1608,8 +1608,8 @@ int AM_add_disclaimer_insert_html( 	struct AM_disclaimer_details *dd, FFGET_FILE
 
 		} else {
 			/*
-			 * Last gasp attempt to add pre html. Force it in
-			 * then get out of here.
+			 * If the first line wasn't <body>, force our
+			 * pre-html in.
 			 */
 			if (!html_inserted &&
 			    glb.force_for_bad_html &&
@@ -1617,13 +1617,6 @@ int AM_add_disclaimer_insert_html( 	struct AM_disclaimer_details *dd, FFGET_FILE
 				AM_disclaimer_html_perform_insertion(
 						dd, f, newf);
 				html_inserted = 1;
-				/*
-				 * Without this check we may cut this mime
-				 * part short when inserting BASE64 HTML.
-				 */
-				if (dd->content_encoding !=
-				    _CTRANS_ENCODING_B64)
-					break;
 			}
 			fprintf(newf,"%s",line);
 		}
@@ -1639,10 +1632,12 @@ int AM_add_disclaimer_insert_html( 	struct AM_disclaimer_details *dd, FFGET_FILE
 	}
 
 	/*
-	 * Be sure to add back the boundary or the last line we read
-	 * when doing the force pre-html insert.
+	 * Be sure to add back the boundary line. Except for BASE64 HTML
+	 * as the boundary line shouldn't actually be in the BASE64 encoded
+	 * text.
 	 */
-	fprintf(newf,"%s", line);
+	if (dd->content_encoding != _CTRANS_ENCODING_B64)
+		fprintf(newf,"%s", line);
 
 	return dd->html_inserted = html_inserted;
 }
@@ -2053,9 +2048,7 @@ char *AM_insert_HTML_disclaimer_into_buffer( char *buffer, struct AM_disclaimer_
 int AM_insert_HTML_disclaimer_into_segment64(FFGET_FILE *f, FILE *newf,
 					     struct AM_disclaimer_details *dd)
 {
-	char line[AM_1K_BUFFER_SIZE+1]="";
-	int last_boundary_written = -1;
-	int insert_success = 0;
+	char line[AM_1K_BUFFER_SIZE +1 ] = "\0";
 	size_t html_size;
 	char *b64_buffer;
 	char b64_raw_fname[128];
@@ -2072,84 +2065,56 @@ int AM_insert_HTML_disclaimer_into_segment64(FFGET_FILE *f, FILE *newf,
 		return 1;
 	}
 
-	 DAM LOGGER_log("%s:%d:AM_insert_HTML_disclaimer_into_segment64:DEBUG: glb.HTML_too=%d, dd->html_inserted=%d, dd->content_type=%d, dd->isfile=%d"
+	DAM LOGGER_log("%s:%d:AM_insert_HTML_disclaimer_into_segment64:DEBUG: glb.HTML_too=%d, dd->html_inserted=%d, dd->content_type=%d, dd->isfile=%d"
 			,FL
 			,glb.HTML_too
 			,dd->html_inserted
 			,dd->content_type
-			,dd->isfile
-			);
+			,dd->isfile);
 
-	if (dd->content_type == _CTYPE_TEXT_HTML &&
-	    dd->content_encoding == _CTRANS_ENCODING_B64) {
-		DAM LOGGER_log("%s:%d:AM_insert_HTML_disclaimer_into_segment64:DEBUG: Conditions right for HTML disclaimer to be added",FL);
-
-		while (FFGET_fgets(line, AM_1K_BUFFER_SIZE, f)) {
-			last_boundary_written = 0;
-			if (BS_cmp(line,strlen(line)) == 1) {
-				DAM LOGGER_log("%s:%d:AM_insert_HTML_disclaimer_into_segment64:DEBUG: Boundary hit",FL);
-				break;
-			}
-			/* write raw base64 data to the tmp file */
-			fprintf(b64_raw_file, "%s", line);
+	while (FFGET_fgets(line, AM_1K_BUFFER_SIZE, f)) {
+		if (BS_cmp(line,strlen(line)) == 1) {
+			DAM LOGGER_log("%s:%d:AM_insert_HTML_disclaimer_into_segment64:DEBUG: Boundary hit",FL);
+			break;
 		}
-
-		/*
-		 * Need to set the file pointer back to the start or there
-		 * will be no data to read by the next bit.
-		 */
-		rewind(b64_raw_file);
-
-		/** Convert the BASE64 code into human text **/
-		AM_base64_decode_to_buffer(b64_raw_fname, &b64_buffer);
-
-		/* Re-purpose b64_raw_file to hold the decoded buffer */
-		truncate(b64_raw_fname, 0);
-		fprintf(b64_raw_file, "%s", b64_buffer);
-		FFGET_setstream(&rf, b64_raw_file);
-
-		/* html_f will hold the HTML + disclaimer */
-		html_f = open_memstream(&html_buf, &html_size);
-		FFGET_seek(&rf, 0, SEEK_SET);
-		AM_add_disclaimer_insert_html(dd, &rf, html_f);
-		fclose(html_f);
-
-		if (!html_buf)
-			html_buf = b64_buffer;
-
-		AM_base64_encode_buffer_to_FILE(html_buf, html_size, newf);
-		free(html_buf);
-		fclose(b64_raw_file);
-		unlink(b64_raw_fname);
-
-		if (glb.verbose && !dd->html_inserted)
-			LOGGER_log("WARNING: Could not insert BASE64 HTML disclaimer into email");
-		else
-			insert_success = 1;
-
-		if (!last_boundary_written) {
-			DAM LOGGER_log("%s:%d:AM_insert_HTML_disclaimer_into_segment64:DEBUG: writing the boundary line '%s'", FL, line);
-			fprintf(newf, "%s", line);
-			last_boundary_written = 1;
-		}
-	} else {
-		DAM LOGGER_log("%s:%d:AM_insert_HTML_disclaimer_into_segment64:DEBUG: Conditions not right to insert HTML disclaimer",FL);
+		/* write raw base64 data to the tmp file */
+		fprintf(b64_raw_file, "%s", line);
 	}
 
 	/*
-	 * If we weren't able to insert a disclaimer, then read through
-	 * to the end of the segment
+	 * Need to set the file pointer back to the start or there
+	 * will be no data to read by the next bit.
 	 */
-	if (!insert_success) {
-		while (FFGET_fgets(line, AM_1K_BUFFER_SIZE, f)) {
-			last_boundary_written = 0;
-			fprintf(newf, "%s", line);
-			if (BS_cmp(line,strlen(line))) {
-				DAM LOGGER_log("%s:%d:AM_insert_HTML_disclaimer_into_segment64:DEBUG: Boundary hit, breaking out",FL);
-				break;
-			}
-		}
-	}
+	rewind(b64_raw_file);
+
+	/* Convert the BASE64 code into human text */
+	AM_base64_decode_to_buffer(b64_raw_fname, &b64_buffer);
+
+	/* Re-purpose b64_raw_file to hold the decoded buffer */
+	truncate(b64_raw_fname, 0);
+	fprintf(b64_raw_file, "%s", b64_buffer);
+	/* We need the boundary line for AM_add_disclaimer_insert_html() */
+	fprintf(b64_raw_file, "\n%s", line);
+	FFGET_setstream(&rf, b64_raw_file);
+
+	/* html_f will hold the HTML + disclaimer */
+	html_f = open_memstream(&html_buf, &html_size);
+	FFGET_seek(&rf, 0, SEEK_SET);
+	AM_add_disclaimer_insert_html(dd, &rf, html_f);
+	fclose(html_f);
+
+	if (!html_buf)
+		html_buf = b64_buffer;
+
+	AM_base64_encode_buffer_to_FILE(html_buf, html_size, newf);
+	free(html_buf);
+	fclose(b64_raw_file);
+	unlink(b64_raw_fname);
+
+	DAM LOGGER_log("%s:%d:AM_insert_HTML_disclaimer_into_segment64:DEBUG: writing the boundary line '%s'", FL, line);
+	fprintf(newf, "%s", line);
+	if (line[strlen(line) - 1] != '\n')
+		fprintf(newf, "\n");
 
 	return 0;
 }
