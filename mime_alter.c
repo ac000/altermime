@@ -1579,7 +1579,7 @@ int AM_add_disclaimer_insert_html( 	struct AM_disclaimer_details *dd, FFGET_FILE
 		// If we found one of the tags, then insert our disclaimer aruond about
 		// here.
 
-		if (prebody != NULL)
+		if (prebody && !html_inserted)
 		{
 			DAM LOGGER_log("%s:%d:AM_add_disclaimer_insert_html:DEBUG: Inserting html-body disclaimer",FL);
 			DAM LOGGER_log("%s:%d:AM_add_disclaimer_insert_html:DEBUG: prebody = %s",FL,prebody);
