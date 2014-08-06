@@ -148,11 +148,15 @@ int qp_encode( char *out, size_t out_size, char *in, size_t in_size, char *line_
 				charout_size = 1;
 			}
 
-			if (current_line_length +charout_size >= 79) { // Was 76, updated to fix Outlook problems
-				//snprintf(op, out_remaining, "%s=\r\n", paragraph);
-				snprintf(op, out_remaining, "%s=%s", paragraph, line_terminator);
-				op+= strlen(paragraph);// +3; /** jump the output + =\r\n **/
-				out_remaining-= (strlen(paragraph)); // Was +3, updated to fix Outlook problems
+			if (current_line_length +charout_size >= 76) {
+				int para_ssize;
+
+				para_ssize = snprintf(
+						op, out_remaining, "%s=%s",
+						paragraph, line_terminator);
+				/* Jump to end of output */
+				op += para_ssize;
+				out_remaining -= (strlen(paragraph));
 
 				QPD LOGGER_log("%s:%d:qp_encode:DEBUG: Soft break (%Zd + %d > 76 char) for '%s'", FL, current_line_length, charout_size, paragraph);
 				
@@ -174,7 +178,7 @@ int qp_encode( char *out, size_t out_size, char *in, size_t in_size, char *line_
 
 
 		QPD LOGGER_log("%s:%d:qp_encode:DEBUG: Adding paragraph '%s' to output\n", FL, paragraph );
-		
+
 		snprintf(op, out_remaining, "%s\r\n", paragraph);
 		op += (strlen(paragraph) +2);
 		out_remaining -= (strlen(paragraph) +2);
