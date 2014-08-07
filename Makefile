@@ -11,6 +11,7 @@ ALTERMIME_OPTIONS=-DALTERMIME_PRETEXT
 #ALTERMIME_OPTIONS=
 CFLAGS=-Wall -Werror -g -I. -O2 $(ALTERMIME_OPTIONS)
 OBJS= strstack.o mime_alter.o ffget.o pldstr.o filename-filters.o logger.o MIME_headers.o libmime-decoders.o boundary-stack.o qpe.o
+VERSION=\""alterMIME $(shell git describe) - https://github.com/ac000/altermime/tree/fixs ($(shell date +%B-%Y)). alterMIME by Paul L Daniels - http://www.pldaniels.com/altermime\n"\"
 
 
 .c.o:
@@ -19,7 +20,7 @@ OBJS= strstack.o mime_alter.o ffget.o pldstr.o filename-filters.o logger.o MIME_
 all: altermime
 
 altermime: altermime.c ${OBJS}
-	${CC} ${CFLAGS} altermime.c ${OBJS} -o altermime
+	${CC} ${CFLAGS} altermime.c ${OBJS} -o altermime -DALTERMIMEAPP_VERSION=${VERSION}
 
 
 # Build Install
