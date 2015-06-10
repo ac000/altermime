@@ -106,6 +106,7 @@ int qp_encode( char *out, size_t out_size, char *in, size_t in_size, char *line_
 	do {
 		char charout[4];
 		int charout_size=0;
+		int para_len;
 
 		if (lineend != '\0') {
 			if (linestart == NULL) {
@@ -179,9 +180,10 @@ int qp_encode( char *out, size_t out_size, char *in, size_t in_size, char *line_
 
 		QPD LOGGER_log("%s:%d:qp_encode:DEBUG: Adding paragraph '%s' to output\n", FL, paragraph );
 
-		snprintf(op, out_remaining, "%s\r\n", paragraph);
-		op += (strlen(paragraph) +2);
-		out_remaining -= (strlen(paragraph) +2);
+		para_len = snprintf(op, out_remaining, "%s%s", paragraph,
+				line_terminator);
+		op += para_len;
+		out_remaining -= para_len;
 
 	} while ((lineend < input_data_limit)&&(*lineend != '\0')); /** for each line **/
 
