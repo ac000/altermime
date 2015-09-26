@@ -2056,6 +2056,7 @@ int AM_insert_HTML_disclaimer_into_segment64(FFGET_FILE *f, FILE *newf,
 	FILE *b64_raw_file;
 	FILE *html_f;
 	FFGET_FILE rf;
+	int err __attribute__((unused));
 
 	snprintf(b64_raw_fname, sizeof(b64_raw_fname), "altermime-raw-%d.b64",
 			getpid());
@@ -2091,7 +2092,7 @@ int AM_insert_HTML_disclaimer_into_segment64(FFGET_FILE *f, FILE *newf,
 	AM_base64_decode_to_buffer(b64_raw_fname, &b64_buffer);
 
 	/* Re-purpose b64_raw_file to hold the decoded buffer */
-	truncate(b64_raw_fname, 0);
+	err = truncate(b64_raw_fname, 0);
 	fprintf(b64_raw_file, "%s", b64_buffer);
 	/* We need the boundary line for AM_add_disclaimer_insert_html() */
 	fprintf(b64_raw_file, "\n%s", line);
