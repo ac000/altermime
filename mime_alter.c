@@ -1548,11 +1548,36 @@ int AM_add_disclaimer_insert_html( 	struct AM_disclaimer_details *dd, FFGET_FILE
 	char lline[ AM_1K_BUFFER_SIZE +1];
 	char *prebody, *tmpbody;
 	int html_inserted = 0;
+	int body_found = 0;
+	FFGET_FILE tf;
 //	size_t bodypos, htmlpos, tagpos;
 
 //	bodypos = htmlpos = tagpos = -1;
 
 	DAM LOGGER_log("%s:%d:AM_add_disclaimer_insert_html:DEBUG: Starting to attempt to insert HTML disclaimer",FL);
+
+	/*
+	 * Bit of a hack. Do a scan through the mime part for a <body>
+	 * tag as it is quite likely that it won't just be in the first
+	 * line, which means we would just end up force inserting the
+	 * html right at the top even if there was a <body> tag further
+	 * down when using the --force-for-bad-html option.
+	 *
+	 * We take a copy of the FFGET_FILE structure as doing a
+	 * FFGET_ftell/FFGET_seek combo didn't have the desirted effect
+	 * of resetting the file pointer for the second FFGET_fgets loop.
+	 */
+	memcpy(&tf, f, sizeof(FFGET_FILE));
+	while (FFGET_fgets(line, AM_1K_BUFFER_SIZE, &tf)) {
+		if (BS_cmp(line,strlen(line)) == 1)
+			break;
+		snprintf(lline, sizeof(lline), "%s", line);
+		PLD_strlower(lline);
+		if (strstr(lline,"<body")) {
+			body_found = 1;
+			break;
+		}
+	}
 
 	while (FFGET_fgets(line, AM_1K_BUFFER_SIZE, f))
 	{
@@ -1605,13 +1630,12 @@ int AM_add_disclaimer_insert_html( 	struct AM_disclaimer_details *dd, FFGET_FILE
 			}
 
 		//	break; ??? why is this BREAK here?
-
 		} else {
 			/*
-			 * If the first line wasn't <body>, force our
-			 * pre-html in.
+			 * If there is no <body> tag force the pre-html in.
 			 */
 			if (!html_inserted &&
+			    !body_found &&
 			    glb.force_for_bad_html &&
 			    glb.pretext_insert) {
 				AM_disclaimer_html_perform_insertion(
