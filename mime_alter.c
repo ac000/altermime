@@ -1619,7 +1619,10 @@ int AM_add_disclaimer_insert_html( 	struct AM_disclaimer_details *dd, FFGET_FILE
 			// save to file the first part of the line segment
 
 			if (glb.pretext_insert==1) {
-				fprintf(newf,"%s>%s",line, glb.ldelimeter);
+				fprintf(newf,"%s>%s%s",line,
+						(dd->content_encoding ==
+						 _CTRANS_ENCODING_QP) ? "=" :
+						"", glb.ldelimeter);
 				AM_disclaimer_html_perform_insertion( dd, f, newf );
 				fprintf(newf, "%s", (tmpbody +1));
 
