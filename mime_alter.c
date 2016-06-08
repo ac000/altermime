@@ -1549,6 +1549,7 @@ int AM_add_disclaimer_insert_html( 	struct AM_disclaimer_details *dd, FFGET_FILE
 	char *prebody, *tmpbody;
 	int html_inserted = 0;
 	int body_found = 0;
+	int pos = ftell(f->f);
 	FFGET_FILE tf;
 //	size_t bodypos, htmlpos, tagpos;
 
@@ -1578,6 +1579,7 @@ int AM_add_disclaimer_insert_html( 	struct AM_disclaimer_details *dd, FFGET_FILE
 			break;
 		}
 	}
+	fseek(f->f, pos, SEEK_SET);
 
 	while (FFGET_fgets(line, AM_1K_BUFFER_SIZE, f))
 	{
