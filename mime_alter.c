@@ -1532,6 +1532,9 @@ int AM_disclaimer_html_perform_insertion( struct AM_disclaimer_details *dd, FFGE
 	return 0;
 }
 
+#define BODY_START	0x01
+#define BODY_CLOSE	0x02
+#define BODY_FOUND	0x04
 /*------------------------------------------------------------------------
 Procedure:     AM_add_disclaimer_insert_html ID:1
 Purpose:       Inserts a disclaimer with <PRE> tagging into a HTML block of text just prior to the
@@ -1547,8 +1550,9 @@ int AM_add_disclaimer_insert_html( 	struct AM_disclaimer_details *dd, FFGET_FILE
 	char line[ AM_1K_BUFFER_SIZE +1];
 	char lline[ AM_1K_BUFFER_SIZE +1];
 	char *prebody, *tmpbody;
+	char *pt = NULL;
 	int html_inserted = 0;
-	int body_found = 0;
+	unsigned int body_status = 0;
 	int pos = ftell(f->f);
 	FFGET_FILE tf;
 //	size_t bodypos, htmlpos, tagpos;
@@ -1565,8 +1569,11 @@ int AM_add_disclaimer_insert_html( 	struct AM_disclaimer_details *dd, FFGET_FILE
 	 * down when using the --force-for-bad-html option.
 	 *
 	 * We take a copy of the FFGET_FILE structure as doing a
-	 * FFGET_ftell/FFGET_seek combo didn't have the desirted effect
+	 * FFGET_ftell/FFGET_seek combo didn't have the desired effect
 	 * of resetting the file pointer for the second FFGET_fgets loop.
+	 *
+	 * This isn't perfect and does assume that at the very least
+	 * opening and closing <>'s match up.
 	 */
 	memcpy(&tf, f, sizeof(FFGET_FILE));
 	while (FFGET_fgets(line, AM_1K_BUFFER_SIZE, &tf)) {
@@ -1574,28 +1581,45 @@ int AM_add_disclaimer_insert_html( 	struct AM_disclaimer_details *dd, FFGET_FILE
 			break;
 		snprintf(lline, sizeof(lline), "%s", line);
 		PLD_strlower(lline);
-		if (strstr(lline,"<body")) {
-			body_found = 1;
+		prebody = strstr(lline, "<body");
+		if (prebody)
+			body_status |= BODY_START;
+		if (body_status & BODY_START)
+			pt = strchr(lline, '>');
+		if ((body_status & BODY_START) && pt) {
+			body_status |= BODY_FOUND;
 			break;
 		}
 	}
 	fseek(f->f, pos, SEEK_SET);
+	body_status &= ~BODY_START;	/* unset BODY_START */
+	pt = NULL;
 
-	while (FFGET_fgets(line, AM_1K_BUFFER_SIZE, f))
-	{
+	while (FFGET_fgets(line, AM_1K_BUFFER_SIZE, f)) {
 		/* Don't read past the mime boundary */
-		if ( BS_cmp(line,strlen(line))==1 )
+		if (BS_cmp(line, strlen(line)) == 1)
 			break;
-		snprintf(lline, sizeof(lline),"%s",line);
+		snprintf(lline, sizeof(lline), "%s", line);
 		PLD_strlower(lline);
 
 		if (glb.pretext_insert == 1) {
-			prebody =  strstr(lline,"<body");
-
-			if (prebody) {
-				char *pt;
-				pt = strchr(prebody,'>');
-				if (pt) prebody = pt; else prebody = NULL;
+			prebody = strstr(lline, "<body");
+			/*
+			 * The complexity here is to cater for the fact
+			 * that the <body ...> tag may be split across
+			 * multiple lines.
+			 */
+			if (prebody)
+				body_status |= BODY_START;
+			if (body_status & BODY_START) {
+				if (prebody)
+					pt = strchr(prebody, '>');
+				else
+					pt = strchr(lline, '>');
+			}
+			if ((body_status & BODY_START) && pt) {
+				body_status |= BODY_CLOSE;
+				prebody = pt;
 			}
 		} else {
 			prebody = strstr(lline,"</body");
@@ -1606,8 +1630,7 @@ int AM_add_disclaimer_insert_html( 	struct AM_disclaimer_details *dd, FFGET_FILE
 		// If we found one of the tags, then insert our disclaimer aruond about
 		// here.
 
-		if (prebody && !html_inserted)
-		{
+		if ((body_status & BODY_CLOSE) && !html_inserted) {
 			DAM LOGGER_log("%s:%d:AM_add_disclaimer_insert_html:DEBUG: Inserting html-body disclaimer",FL);
 			DAM LOGGER_log("%s:%d:AM_add_disclaimer_insert_html:DEBUG: prebody = %s",FL,prebody);
 
@@ -1640,7 +1663,7 @@ int AM_add_disclaimer_insert_html( 	struct AM_disclaimer_details *dd, FFGET_FILE
 			 * If there is no <body> tag force the pre-html in.
 			 */
 			if (!html_inserted &&
-			    !body_found &&
+			    (~body_status & BODY_FOUND) &&
 			    glb.force_for_bad_html &&
 			    glb.pretext_insert) {
 				AM_disclaimer_html_perform_insertion(
