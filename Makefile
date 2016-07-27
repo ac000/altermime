@@ -12,7 +12,7 @@ ALTERMIME_OPTIONS=-DALTERMIME_PRETEXT
 CFLAGS=-Wall -Werror -g -I. -O2 -Wp,-D_FORTIFY_SOURCE=2 -fstack-protector --param=ssp-buffer-size=4 -fPIC $(ALTERMIME_OPTIONS)
 LDFLAGS=-Wl,-z,relro -Wl,-z,now -pie
 OBJS= strstack.o mime_alter.o ffget.o pldstr.o filename-filters.o logger.o MIME_headers.o libmime-decoders.o boundary-stack.o qpe.o
-VERSION=\""alterMIME $(shell git describe) - https://github.com/ac000/altermime/tree/fixs ($(shell date +%B-%Y)). alterMIME by Paul L Daniels - http://www.pldaniels.com/altermime\n"\"
+VERSION=\""alterMIME $(shell git describe --long --dirty) - https://github.com/ac000/altermime/tree/fixs ($(shell date +%B-%Y)). alterMIME by Paul L Daniels - http://www.pldaniels.com/altermime\n"\"
 
 
 .c.o:
